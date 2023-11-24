@@ -1,0 +1,14 @@
+{
+  "name": "cg-star-system",
+  "version": "0.0.1",
+  "description": "A start system built with WebGL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CG32",
+  "license": "ISC",
+  "dependencies": {
+    "twgl.js": "^5.5.3"
+  }
+}
