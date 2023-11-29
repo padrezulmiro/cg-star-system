@@ -2,14 +2,21 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8"/>
+        <!-- whats this for? erm. i copied it from twgl example. -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> 
         <title>CG32's WebGL Star System</title>
         <style>
             canvas {
-                display: block;
-                width: 90vw;
-                height: 90vh;
+                /* make canvas fullscreen */
+                position:absolute;
+                top:0px;
+                left:0px;
+                /* display: block; */
+                width: 100vw;
+                height: 100vh;
             }
         </style>
+        <link rel="icon" type="image/png" href="./cake.png">
     </head>
     <body>
         <canvas id="canvas"></canvas>
