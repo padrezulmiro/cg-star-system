@@ -1,17 +1,23 @@
 export const vsDirect = `
-uniform mat4 u_tMatrix;
-attribute vec4 a_position;
+uniform mat4 u_worldViewProjection;
 
-void main() {
-    gl_Position = u_tMatrix * a_position;
+attribute vec4 position;
+varying vec4 vcolor;
+
+void main()
+{
+    gl_Position = u_worldViewProjection * position;
+    vcolor = position;
+
 }
 `
 
 export const fsDirect = `
 precision mediump float;
-uniform vec4 a_color;
+varying vec4 vcolor;
 
 void main() {
-    gl_FragColor = a_color;
+    //gl_FragColor = vec4(1, 1, 0, 1);
+    gl_FragColor = vcolor;
 }
 `
