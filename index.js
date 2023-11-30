@@ -35,10 +35,10 @@ function render(time) {
     const fov = 30 * Math.PI / 180;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const zNear = 0.5;
-    const zFar = 10;
+    const zFar = 20;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
-    const eye = [0, 0, -13.5];
+    const eye = [0, 0, -13];
     const target = [0, 0, 0];
     const up = [0, 1, 0];
     const camera = m4.lookAt(eye, target, up);
@@ -64,6 +64,7 @@ function generateBufferInfos(gl, planets) {
 
 function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
     const planets = config.bodies
+    const step = time * 0.001
 
     for (const info in bufferInfos) {
         gl.useProgram(programInfo.program);
@@ -73,8 +74,12 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
             planets[info].pos[0],
             planets[info].pos[1],
             planets[info].pos[2])
+
+        if (info == "kerbin") {
+            const x = v3.create(0, 0, 0)
+        }
+
         let matrix = m4.translate(viewProjection, translationVector)
-        matrix = m4.rotateY(matrix, time*0.001)
 
         const uniforms = {}
         uniforms.u_matrix = matrix
@@ -83,3 +88,5 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
         twgl.drawBufferInfo(gl, bufferInfos[info]);
     }
 }
+
+function ellipseTranslation()

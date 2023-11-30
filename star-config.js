@@ -14,15 +14,15 @@ export const config = {
 
         kerbol: {
             name: "kerbol",
-            radius: 4.1,
+            radius: 3,
             pos: [0, 0, 0],
             rotation_period: 10
         },
 
         kerbin: {
             name: "kerbin",
-            radius: 3.9,
-            pos: [5, 0, 0],
+            radius: 1,
+            pos: [8, 0, 0],
             rotation_period: 1,
             orbit: {
                 type: "ellipse",
