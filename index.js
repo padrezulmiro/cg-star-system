@@ -1,5 +1,5 @@
 import * as twgl from "./node_modules/twgl.js/dist/5.x/twgl-full.module.js"
-// import config from "./star-config.json" assert {type: "json"} //FIXME: eventually we'll try to import as json.
+import {config} from "./star-config.js"
 import {
     vsDirect,
     fsDirect
@@ -14,8 +14,6 @@ const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 // setting up vertexes for the primitive
 const bufferInfo = twgl.primitives.createSphereBufferInfo(gl,1,16,8);
 const uniforms = {};
-
-
 
 gl.clearColor(0, 0, 0.2, 1);  // background color
 requestAnimationFrame(render);
