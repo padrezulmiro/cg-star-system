@@ -14,7 +14,7 @@ export const config = {
 
         kerbol: {
             name: "kerbol",
-            radius: 3,
+            radius: 2,
             pos: [0, 0, 0],
             rotation_period: 10
         },

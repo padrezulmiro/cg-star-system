@@ -70,13 +70,20 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
         gl.useProgram(programInfo.program);
         twgl.setBuffersAndAttributes(gl, programInfo, bufferInfos[info]);
 
-        const translationVector = v3.create(
+        let translationVector = v3.create(
             planets[info].pos[0],
             planets[info].pos[1],
             planets[info].pos[2])
 
         if (info == "kerbin") {
-            const x = v3.create(0, 0, 0)
+            let x = v3.create(-2, 0, 0)
+            let majAxis = v3.create(6, 0, 0)
+            let minAxis = v3.create(0, 4, 0)
+            majAxis = v3.mulScalar(majAxis, Math.cos(step))
+            minAxis = v3.mulScalar(minAxis, Math.sin(step))
+            x = v3.add(x, majAxis)
+            x = v3.add(x, minAxis)
+            translationVector = x
         }
 
         let matrix = m4.translate(viewProjection, translationVector)
@@ -89,4 +96,3 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
     }
 }
 
-function ellipseTranslation()
