@@ -1,3 +1,5 @@
+"use strict";
+
 import * as twgl from "./node_modules/twgl.js/dist/5.x/twgl-full.module.js"
 import {config} from "./star-config.js"
 import {
@@ -8,51 +10,76 @@ import {
 // grabbing webgl references
 const m4 = twgl.m4
 const primitives = twgl.primitives
-const gl = document.querySelector("canvas").getContext("webgl");
+const v3 = twgl.v3
+
+/** @type {HTMLCanvasElement}*/
+const canvas = document.querySelector("canvas")
+/** @type {WebGLRenderingContext}*/
+const gl = canvas.getContext("webgl");
+
 const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 
-// setting up vertexes for the primitive
-const bufferInfo = twgl.primitives.createSphereBufferInfo(gl,1,16,8);
-const uniforms = {};
+const bufferInfos = generateBufferInfos(gl, config.bodies)
 
-gl.clearColor(0, 0, 0.2, 1);  // background color
+gl.clearColor(0, 0, 0, 1);  // background color
 requestAnimationFrame(render);
 
-
 function render(time) {
-    twgl.resizeCanvasToDisplaySize(gl.canvas);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    twgl.resizeCanvasToDisplaySize(canvas);
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const fov = 30 * Math.PI / 180;
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    const aspect = canvas.clientWidth / canvas.clientHeight;
     const zNear = 0.5;
     const zFar = 10;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
-    const eye = [0, 0, -10];
+    const eye = [0, 0, -13.5];
     const target = [0, 0, 0];
     const up = [0, 1, 0];
     const camera = m4.lookAt(eye, target, up);
     const view = m4.inverse(camera);
 
     const viewProjection = m4.multiply(projection, view);
-    const world = m4.rotationY(time*0.001);//m4.identity();
 
-    uniforms.u_world = world;
-    uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
-
-    gl.useProgram(programInfo.program);
-    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-    twgl.setUniforms(programInfo, uniforms);
-    twgl.drawBufferInfo(gl, bufferInfo);
+    drawPlanets(gl, programInfo, bufferInfos, viewProjection, time)
 
     requestAnimationFrame(render);
 }
 
-function initGL(gl) {}
+function generateBufferInfos(gl, planets) {
+    const bufferInfos = {}
 
-// function render(step) {}
+    for (const planet in planets) {
+        bufferInfos[planets[planet].name] =
+            primitives.createSphereBufferInfo(gl, planets[planet].radius, 32, 32)
+    }
+
+    return bufferInfos
+}
+
+function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
+    const planets = config.bodies
+
+    for (const info in bufferInfos) {
+        gl.useProgram(programInfo.program);
+        twgl.setBuffersAndAttributes(gl, programInfo, bufferInfos[info]);
+
+        const translationVector = v3.create(
+            planets[info].pos[0],
+            planets[info].pos[1],
+            planets[info].pos[2])
+        let matrix = m4.translate(viewProjection, translationVector)
+        matrix = m4.rotateY(matrix, time*0.001)
+
+        const uniforms = {}
+        uniforms.u_matrix = matrix
+
+        twgl.setUniforms(programInfo, uniforms);
+        twgl.drawBufferInfo(gl, bufferInfos[info]);
+    }
+}

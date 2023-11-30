@@ -1,14 +1,14 @@
 export const vsDirect = `
-uniform mat4 u_worldViewProjection;
+uniform mat4 u_matrix;
 
 attribute vec4 position;
+
 varying vec4 vcolor;
 
 void main()
 {
-    gl_Position = u_worldViewProjection * position;
+    gl_Position = u_matrix * position;
     vcolor = position;
-
 }
 `
 
