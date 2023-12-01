@@ -25,8 +25,9 @@ export const config = {
             pos: [8, 0, 0],
             rotation_period: 1,
             orbit: {
-                type: "ellipse",
                 around: "kerbol",
+                eccentricity: 0.5,
+                rotation: 0,
                 orbital_period: 100
             }
         },
