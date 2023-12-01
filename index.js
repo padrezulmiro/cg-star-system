@@ -14,6 +14,9 @@ const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 // setting up vertexes for the primitive
 const bufferInfo = twgl.primitives.createSphereBufferInfo(gl,1,16,8);
 const uniform = {
+    projection, 
+    modelview,  //these 3 need to be smtg, no idea what tho, it's hard to understand how it all ties up
+    normalMat,
     Ka : 0.5,   
     Kd : 0.5,   
     Ks : 0.5,   
