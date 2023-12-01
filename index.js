@@ -13,7 +13,16 @@ const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 
 // setting up vertexes for the primitive
 const bufferInfo = twgl.primitives.createSphereBufferInfo(gl,1,16,8);
-const uniforms = {};
+const uniform = {
+    Ka : 0.5,   
+    Kd : 0.5,   
+    Ks : 0.5,   
+    shininessVal : 50,
+    lightPos : [0, 0, 0],
+    ambientColor : [0, 0, 0],
+    diffuseColor : [0, 0, 0],
+    specularColor : [1, 1, 1],  
+};
 
 gl.clearColor(0, 0, 0.2, 1);  // background color
 requestAnimationFrame(render);
