@@ -38,7 +38,7 @@ function render(time) {
     const zFar = 20;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
-    const eye = [0, 0, -13];
+    const eye = [0, 0, -16];
     const target = [0, 0, 0];
     const up = [0, 1, 0];
     const camera = m4.lookAt(eye, target, up);
@@ -96,3 +96,32 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
     }
 }
 
+function ellipseTranslationVector(planetName, time) {
+    /*
+     * See https://en.wikipedia.org/wiki/Ellipse#/media/File:Ellipse-param.svg
+     * a = c + k where k is the distance between vertex and orbited planet
+     *
+     * This vertex will be the starting position of the planet
+     */
+    const planets = config.bodies
+    const planet = planets[planetName]
+    const orbited = planets[planet.orbit.around]
+
+    const planetPos = v3.create(planet.pos[0], planet.pos[1], planet.pos[2])
+    const orbitedPos = v3.create(orbited.pos[0], orbited.pos[1], orbited.pos[2])
+
+    const orbitedPlanetVec = v3.subtract(planetPos, orbitedPos)
+    const orbitedPlanetDistance = v3.distance(orbitedPlanetVec)
+    const centerOrbitedDistance =
+          (planet.orbit.eccentricity / (1 - planet.orbit.eccentricity)) *
+          orbitedPlanetDistance
+    const orbitedPlanetUnitVector = v3.normalize(orbitedPlanetVec)
+    const centerOrbitedVec = v3.mulScalar(
+        orbitedPlanetUnitVector,
+        centerOrbitedDistance)
+    const centerPos = v3.subtract(orbitedPos, centerOrbitedVec)
+
+    const majorAxis = v3.subtract(planetPos, centerPos)
+
+
+}
