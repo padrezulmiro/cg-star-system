@@ -25,7 +25,7 @@ const bufferInfos = generateBufferInfos(gl, config.bodies)
 gl.clearColor(0, 0, 0.2, 1);  // background color
 
 // ========== INITIAL CAM config ==========
-const eye = [0, 0, 10];
+const eye = [0, 0, 50];
 const target = [0, 0, 0];
 const up = [0, 1, 0];
 var cameraConfig = new cam.Camera(eye,target,up);
@@ -119,7 +119,7 @@ function render(time) {
     const fov = 30 * Math.PI / 180;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const zNear = 0.5;
-    const zFar = 200;
+    const zFar = 1000;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
 

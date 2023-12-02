@@ -32,6 +32,19 @@ export const config = {
             }
         },
 
+        mun: {
+            name: "mun",
+            radius: 0.5,
+            pos: [9, 0, 0],
+            rotation_period: 1,
+            orbit: {
+                around: "kerbin",
+                eccentricity: 0.5,
+                ellipseRotation: Math.PI / 6,
+                orbital_period: 100
+            }
+        },
+
         jool : {
             name: "jool",
             radius: 1.5,
@@ -40,7 +53,7 @@ export const config = {
             orbit: {
                 around: "kerbol",
                 eccentricity: 0.3,
-                ellipseRotation: Math.PI / 6,
+                ellipseRotation: 0,
                 orbital_period: 100
             }
         },
