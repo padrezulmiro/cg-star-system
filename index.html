@@ -6,6 +6,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"> 
         <title>CG32's WebGL Star System</title>
         <style>
+
+            #overlay {
+                position: absolute;
+                /* left: 10px; */
+                /* top: 10px; */
+                color: white;
+                padding: 20px;
+                background-color: rgba(0,0,0,.5);
+            }
             canvas {
                 /* make canvas fullscreen */
                 position:absolute;
@@ -20,6 +29,16 @@
     </head>
     <body>
         <canvas id="canvas"></canvas>
+        <div id="overlay">
+            <p>
+                <b>CONTROLS</b><br>
+                0 - snap camera to origin<br>
+                1 - snap camera to Earth<br>
+                2 - snap camera to Sun<br>
+                mouse - rotate camera view<br>
+                arrow keys - panning<br>
+            </p>
+        </div>
         <script src="index.js" type="module"></script>
     </body>
 </html>
