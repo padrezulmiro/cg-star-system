@@ -141,10 +141,6 @@ function render(time) {
     //***********************************
 
     const viewProjection = m4.multiply(projection, view);
-    const world = m4.identity();//m4.rotationY(time*0.001);
-
-    uniforms.u_world = world;
-    uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
 
     drawPlanets(gl, programInfo, bufferInfos, viewProjection, time)
 
