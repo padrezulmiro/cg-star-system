@@ -8,6 +8,7 @@ import * as cam from "./camera.js"
 
 // grabbing webgl references
 const m4 = twgl.m4
+const v3 = twgl.v3
 const primitives = twgl.primitives
 const gl = document.querySelector("canvas").getContext("webgl");
 const CANVAS = document.querySelector("canvas")
@@ -20,10 +21,12 @@ const uniforms = {};
 gl.clearColor(0, 0, 0.2, 1);  // background color
 
 // ========== INITIAL CAM config ==========
-var eye = [0, 0, -10];
-var target = [0, 0, 0];
-var up = [0, 1, 0];
-var camera = m4.lookAt(eye, target, up);
+const eye = [0, 0, 10];
+const target = [0, 0, 0];
+const up = [0, 1, 0];
+var cameraConfig = new cam.Camera(eye,target,up);
+var camera = cameraConfig.camera;
+
 
 // ========== MOUSE EVENTS ==========
 // ref: http://www.webglacademy.com/courses.php?courses=0_1_20_2_3_4_23_5_6_7_10#4
@@ -32,7 +35,7 @@ var THETA = 0, PHI = 0;
 
 var x_prev, y_prev;
 
-var dX = 0, dY = 0;
+var rt_dX = 0, rt_dY = 0;
 var mouseDown = function(e) {
   drag = true;
   x_prev = e.pageX, y_prev = e.pageY;
@@ -46,12 +49,12 @@ var mouseUp = function(e){
 
 var mouseMove = function(e) {
   if (!drag) return false;
-  dX = (e.pageX-x_prev) * 2 * Math.PI / CANVAS.width,
-    dY = (e.pageY-y_prev) * 2 * Math.PI / CANVAS.height;
-  THETA += dX;
-  PHI += dY;
-  x_prev = e.pageX, y_prev = e.pageY;
-  e.preventDefault();
+    rt_dX = (e.pageX-x_prev) * 2 * Math.PI / CANVAS.width,
+    rt_dY = (e.pageY-y_prev) * 2 * Math.PI / CANVAS.height;
+    THETA += rt_dX;
+    PHI += rt_dY;
+    x_prev = e.pageX, y_prev = e.pageY;
+    e.preventDefault();
 };
 
 
@@ -88,6 +91,16 @@ var keyDown = function(e){
             // console.log("back");
             mv_dZ = 1;
             break;
+        case 48: //0
+            //return to look at origin
+            cameraConfig.moveCameraToTarget(eye,target,up);
+            break;
+        case 49: //1
+            //point at earth
+            break;
+        case 50: //2
+            //point at sun
+            break;
     }
     // console.log("x:",mv_dX,"  z:",mv_dZ);
 };
@@ -104,15 +117,17 @@ document.addEventListener("keyup", keyUp, false);
 requestAnimationFrame(render);
 
 function render(time) {
-    // console.log('THETA:',THETA, 'PHI:', PHI);
+    //*********************************** to calculate movement
     var movement = [mv_dX,0,mv_dZ];
-    console.log("movement:",movement, " key:", is_key_down);
+    // console.log("movement:",movement, " key:", is_key_down);
     if(!is_key_down){
         if (Math.abs(mv_dX) <= LOWER_BOUND){mv_dX = 0};
         if (Math.abs(mv_dZ) <= LOWER_BOUND){mv_dZ = 0};
         mv_dX*=AMORTIZATION;
         mv_dZ*=AMORTIZATION;
     }
+    //***********************************
+
     twgl.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -126,14 +141,31 @@ function render(time) {
     const zFar = 100;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
-    // eye[0] = mv_dX;
-    // eye[2] = mv_dZ;
-    camera = m4.translate(camera,movement);
-    // dst[12] = eye[0];
-    // dst[13] = eye[1];
-    // dst[14] = eye[2];
-    const turned_camera = cam.turnCamera(m4,camera,eye,THETA,PHI); //turning camera based on mouse movement
-    const view = m4.inverse(turned_camera);
+
+    //*********************************** camera calculations
+
+    // var pointing_at = v3.normalize(cameraConfig.getDirection(camera));
+    // // console.log('pointing',pointing_at);
+    // // console.log('pre-direction oriented movement:', movement);
+    // movement = v3.multiply(pointing_at,movement);//m4.transformDirection(pointing_at,movement);
+    // // // movement = m4.transformDirection(pointing_at,movement);
+    // console.log('movement:', movement);
+    // camera = m4.translate(camera,movement);
+    // // console.log('aftertranslation,',camera);
+
+    console.log('camera movement:', movement);
+    // var movement_world = cameraConfig.v_CamToWorldSpace(camera,movement);
+    // console.log('world movement:', movement_world);
+
+    cameraConfig.moveCameraByV(movement);//m4.translate(camera,movement_world);
+    // console.log('camera:', camera);
+
+    //rotation
+    cameraConfig.turnCamera(rt_dX,rt_dY); //turning camera based on mouse movement
+    rt_dX = 0;
+    rt_dY = 0;
+    const view = m4.inverse(cameraConfig.camera);
+    //***********************************
 
     const viewProjection = m4.multiply(projection, view);
     const world = m4.identity();//m4.rotationY(time*0.001);
