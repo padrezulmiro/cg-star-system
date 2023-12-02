@@ -14,7 +14,7 @@ export const config = {
 
         kerbol: {
             name: "kerbol",
-            radius: 2,
+            radius: 6,
             pos: [0, 0, 0],
             rotation_period: 10
         },
@@ -27,7 +27,20 @@ export const config = {
             orbit: {
                 around: "kerbol",
                 eccentricity: 0.5,
-                rotation: 0,
+                ellipseRotation: Math.PI / 6,
+                orbital_period: 100
+            }
+        },
+
+        jool : {
+            name: "jool",
+            radius: 1.5,
+            pos: [40, 0, 0],
+            rotation_period: 1,
+            orbit: {
+                around: "kerbol",
+                eccentricity: 0.3,
+                ellipseRotation: Math.PI / 6,
                 orbital_period: 100
             }
         },

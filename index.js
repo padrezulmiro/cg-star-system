@@ -35,10 +35,10 @@ function render(time) {
     const fov = 30 * Math.PI / 180;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const zNear = 0.5;
-    const zFar = 20;
+    const zFar = 200;
     const projection = m4.perspective(fov, aspect, zNear, zFar);
 
-    const eye = [0, 0, -16];
+    const eye = [0, 0, -50];
     const target = [0, 0, 0];
     const up = [0, 1, 0];
     const camera = m4.lookAt(eye, target, up);
@@ -75,15 +75,8 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
             planets[info].pos[1],
             planets[info].pos[2])
 
-        if (info == "kerbin") {
-            let x = v3.create(-2, 0, 0)
-            let majAxis = v3.create(6, 0, 0)
-            let minAxis = v3.create(0, 4, 0)
-            majAxis = v3.mulScalar(majAxis, Math.cos(step))
-            minAxis = v3.mulScalar(minAxis, Math.sin(step))
-            x = v3.add(x, majAxis)
-            x = v3.add(x, minAxis)
-            translationVector = x
+        if (info != "kerbol") {
+            translationVector = ellipseTranslationVector(info, time)
         }
 
         let matrix = m4.translate(viewProjection, translationVector)
@@ -111,17 +104,66 @@ function ellipseTranslationVector(planetName, time) {
     const orbitedPos = v3.create(orbited.pos[0], orbited.pos[1], orbited.pos[2])
 
     const orbitedPlanetVec = v3.subtract(planetPos, orbitedPos)
-    const orbitedPlanetDistance = v3.distance(orbitedPlanetVec)
+    const orbitedPlanetDistance = v3.length(orbitedPlanetVec)
+    const orbitedPlanetUnitVector = v3.normalize(orbitedPlanetVec)
+
     const centerOrbitedDistance =
           (planet.orbit.eccentricity / (1 - planet.orbit.eccentricity)) *
           orbitedPlanetDistance
-    const orbitedPlanetUnitVector = v3.normalize(orbitedPlanetVec)
     const centerOrbitedVec = v3.mulScalar(
         orbitedPlanetUnitVector,
-        centerOrbitedDistance)
+        centerOrbitedDistance
+    )
+
     const centerPos = v3.subtract(orbitedPos, centerOrbitedVec)
+    let majorAxis = v3.subtract(planetPos, centerPos)
+    const majorAxisDistance = v3.length(majorAxis)
 
-    const majorAxis = v3.subtract(planetPos, centerPos)
+    const perpendicularUnitVec = standardPerpendicular(majorAxis)
+    const minAxisDistance = Math.sqrt(
+        Math.pow(majorAxisDistance, 2) -
+        Math.pow(centerOrbitedDistance, 2)
+    )
+    const unrotatedMinAxis = v3.mulScalar(perpendicularUnitVec, minAxisDistance)
 
+    const rotationMatrix =
+          m4.axisRotation(majorAxis, planet.orbit.ellipseRotation)
+    let minAxis = m4.transformDirection(rotationMatrix, unrotatedMinAxis)
 
+    const step = time * 0.001
+    majorAxis = v3.mulScalar(majorAxis, Math.cos(step))
+    minAxis = v3.mulScalar(minAxis, Math.sin(step))
+
+    let translationVec = v3.copy(planetPos)
+    translationVec = v3.add(translationVec, majorAxis)
+    translationVec = v3.add(translationVec, minAxis)
+
+    return translationVec
+}
+
+function standardPerpendicular(vector) {
+    const vx = vector[0]
+    const vy = vector[1]
+    const vz = vector[2]
+
+    let px = 1
+    let py = 1
+    let pz = 1
+
+    if (vx != 0) {
+        px = -(vy * py + vz * pz) / vx
+        return v3.normalize(v3.create(px, py, pz))
+    }
+
+    if (vy != 0) {
+        py = -(vx * px + vz * pz) / vy
+        return v3.normalize(v3.create(px, py, pz))
+    }
+
+    if (vz != 0) {
+        pz = -(vx * px + vy * py) / vz
+        return v3.normalize(v3.create(px, py, pz))
+    }
+
+    return v3.create(0, 0, 0)
 }
