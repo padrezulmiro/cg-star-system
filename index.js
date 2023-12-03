@@ -4,7 +4,11 @@ import * as twgl from "./node_modules/twgl.js/dist/5.x/twgl-full.module.js"
 import {config} from "./star-config.js"
 import {
     vsDirect,
-    fsDirect
+    fsDirect,
+    vsPhong,
+    fsPhong,
+    vsGouraud,
+    fsGouraud
 } from "./shaders.js"
 import * as cam from "./camera.js"
 
@@ -18,14 +22,17 @@ const gl = document.querySelector("canvas").getContext("webgl");
 /** @type {HTMLCanvasElement}*/
 const canvas = document.querySelector("canvas")
 
-const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
+const programInfoNoShading = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
+const programInfoPhong = twgl.createProgramInfo(gl, [vsPhong, fsPhong])
+const programInfoGouraud = twgl.createProgramInfo(gl, [vsGouraud, fsGouraud])
+var shadingMode = programInfoPhong;
 
 const bufferInfos = generateBufferInfos(gl, config.bodies);
 const textureInfos = generateTextureInfos(gl,config.bodies);
 
 const positionsTable = createPositionsTable()
 
-gl.clearColor(0, 0, 0.2, 1);  // background color
+gl.clearColor(0, 0, 0.1, 1);  // background color
 
 
 // ========== BINDING SHADERS ==========
@@ -64,8 +71,8 @@ var mouseUp = function(e){
 
 var mouseMove = function(e) {
   if (!drag) return false;
-    rt_dX = (e.pageX-x_prev) * 2 * Math.PI / canvas.width,
-    rt_dY = (e.pageY-y_prev) * 2 * Math.PI / canvas.height;
+    rt_dX = (e.pageX-x_prev) * 0.5 * Math.PI / canvas.width,
+    rt_dY = (e.pageY-y_prev) * 0.5 * Math.PI / canvas.height;
     // THETA += rt_dX;
     // PHI += rt_dY;
     x_prev = e.pageX, y_prev = e.pageY;
@@ -99,13 +106,28 @@ var keyDown = function(e){
             break;
         case 48: //0
             //return to look at origin
-            cameraConfig.moveCameraToTarget(eye,target,up);
+            cameraConfig.moveCameraToTarget([0,150,0],target,[1,0,0]);
             break;
         case 49: //1
             //FIXME: point at earth
+            var earthUp = v3.add(positionsTable['earth'],[0,0,100]);
+            console.log(earthUp);
+            cameraConfig.moveCameraToTarget(earthUp,positionsTable['earth'],up);
             break;
         case 50: //2
-            //FIXME: point at sun
+            cameraConfig.moveCameraToTarget(eye,target,up);
+            break;
+        case 71: //G
+            //change to gouraud
+            shadingMode = programInfoGouraud;
+            break;
+        case 78: //N
+            //change to none
+            shadingMode = programInfoNoShading;
+            break;
+        case 80: //P
+            //change to phong
+            shadingMode = programInfoPhong;
             break;
     }
 };
@@ -154,9 +176,10 @@ function render(time) {
     const view = m4.inverse(cameraConfig.camera);
     //***********************************
 
-    const viewProjection = m4.multiply(projection, view);
+    // const viewProjection = m4.multiply(projection, view);
+    // const world = m4.identity();
 
-    drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time)
+    drawPlanets(gl, shadingMode, bufferInfos, textureInfos, view, projection, time);
 
     requestAnimationFrame(render);
 }
@@ -185,23 +208,32 @@ function generateTextureInfos(gl,planets){
     return textureInfos
 } 
 
-function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
-                     time) {
+function drawPlanets(gl, programInfo, bufferInfos, textureInfos, view, projection,time) {
     const planets = config.bodies
+    const step = time * 0.001
     const timeSeconds = time / 1000
     const animationProgress = timeSeconds / config.animation.cycle_period
-
     for (const info in bufferInfos) {
-        gl.useProgram(programInfo.program);
-        twgl.setBuffersAndAttributes(gl, programInfo, bufferInfos[info]);
+        if(info == "sun"){ //if its the sun, no shaders
+            drawPlanet(gl,planets,info,programInfoNoShading,bufferInfos[info],textureInfos[info],view,projection,animationProgress);
+        }
+        else{ //otherwise use whatever's provided
+            drawPlanet(gl,planets,info,programInfo,bufferInfos[info],textureInfos[info],view,projection,animationProgress);
+        }
+    }
+}
 
-        let translationVector = v3.create(
-            planets[info].pos[0],
-            planets[info].pos[1],
-            planets[info].pos[2])
+function drawPlanet(gl,planets,info,programInfo, bufferInfo, textureInfo, view, projection,time){
+    gl.useProgram(programInfo.program);
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
-        if (info != "kerbol") {
-            translationVector = ellipseTranslationVector(info, animationProgress)
+    let translationVector = v3.create(
+        planets[info].pos[0],
+        planets[info].pos[1],
+        planets[info].pos[2])
+
+    if (info != "sun") {
+        translationVector = ellipseTranslationVector(info, time)
             const planetOriginalPos = v3.create(
                 planets[info].pos[0],
                 planets[info].pos[1],
@@ -210,16 +242,27 @@ function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
             positionsTable[info] = translationVector
         }
 
-        let matrix = m4.translate(viewProjection, translationVector);
+    const world = m4.identity();
+    const viewProjection = m4.multiply(projection, view);
 
-        const uniforms = {};
-        uniforms.u_matrix = matrix;
-        uniforms.u_texture = textureInfos[info];
-
-
-        twgl.setUniforms(programInfo, uniforms);
-        twgl.drawBufferInfo(gl, bufferInfos[info]);
+    const uniforms = {};
+    uniforms.u_worldViewProjection = m4.translate(viewProjection, translationVector); //m4.multiply(matrix,world);
+    uniforms.u_modelview = m4.translation(translationVector);//m4.multiply(view,matrix);
+    uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+    uniforms.u_texture = textureInfo;
+    
+    if (programInfo == programInfoPhong || programInfo == programInfoGouraud){
+        uniforms.Ka = 1;
+        uniforms.Kd = 1;
+        uniforms.Ks = 0.5;
+        uniforms.shininessVal = 10;
+        uniforms.ambientColor = [0, 0, 0, 1];  // black
+        uniforms.diffuseColor = [0,0,0,1];     // not super necessary since there will be textures
+        uniforms.specularColor = [1, 1, 1, 1]; // white
+        uniforms.lightPos = [0,0,0]; // light position
     }
+    twgl.setUniforms(programInfo, uniforms);
+    twgl.drawBufferInfo(gl, bufferInfo);
 }
 
 function ellipseTranslationVector(planetName, animationProgress) {
