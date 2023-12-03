@@ -1,7 +1,7 @@
 export const config = {
     animation: {
         // Animation time is in seconds
-        cycle_period: 15
+        cycle_period: 10
     },
 
     bodies: {

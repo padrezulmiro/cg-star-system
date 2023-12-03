@@ -176,7 +176,6 @@ function render(time) {
     // const viewProjection = m4.multiply(projection, view);
     // const world = m4.identity();
 
-    // drawPlanets(gl, programInfoPhong, bufferInfos, textureInfos, view, projection, time);
     drawPlanets(gl, shadingMode, bufferInfos, textureInfos, view, projection, time);
 
     requestAnimationFrame(render);
@@ -206,44 +205,20 @@ function generateTextureInfos(gl,planets){
     return textureInfos
 } 
 
-// <<<<<<< feat/shaders
 function drawPlanets(gl, programInfo, bufferInfos, textureInfos, view, projection,time) {
     const planets = config.bodies
     const step = time * 0.001
     const timeSeconds = time / 1000
     const animationProgress = timeSeconds / config.animation.cycle_period
-// =======
-// function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
-//                      time) {
-//     const planets = config.bodies
-//     const timeSeconds = time / 1000
-//     const animationProgress = timeSeconds / config.animation.cycle_period
-
-// >>>>>>> main
     for (const info in bufferInfos) {
         if(info == "kerbol"){ //if its the sun, no shaders
-            drawPlanet(gl,planets,info,programInfoNoShading,bufferInfos[info],textureInfos[info],view,projection,time);
+            drawPlanet(gl,planets,info,programInfoNoShading,bufferInfos[info],textureInfos[info],view,projection,animationProgress);
         }
         else{ //otherwise use whatever's provided
-            drawPlanet(gl,planets,info,programInfo,bufferInfos[info],textureInfos[info],view,projection,time);
+            drawPlanet(gl,planets,info,programInfo,bufferInfos[info],textureInfos[info],view,projection,animationProgress);
         }
     }
 }
-
-
-
-// <<<<<<< feat/shaders
-// =======
-//         if (info != "kerbol") {
-//             translationVector = ellipseTranslationVector(info, animationProgress)
-//             const planetOriginalPos = v3.create(
-//                 planets[info].pos[0],
-//                 planets[info].pos[1],
-//                 planets[info].pos[2]
-//             )
-//             positionsTable[info] = translationVector
-//         }
-// >>>>>>> main
 
 function drawPlanet(gl,planets,info,programInfo, bufferInfo, textureInfo, view, projection,time){
     gl.useProgram(programInfo.program);
