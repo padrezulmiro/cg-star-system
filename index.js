@@ -32,7 +32,7 @@ const textureInfos = generateTextureInfos(gl,config.bodies);
 
 const positionsTable = createPositionsTable()
 
-gl.clearColor(0, 0, 0.2, 1);  // background color
+gl.clearColor(0, 0, 0.1, 1);  // background color
 
 
 // ========== BINDING SHADERS ==========
@@ -106,13 +106,14 @@ var keyDown = function(e){
             break;
         case 48: //0
             //return to look at origin
-            cameraConfig.moveCameraToTarget(eye,target,up);
+            cameraConfig.moveCameraToTarget([0,150,0],target,[1,0,0]);
             break;
         case 49: //1
             //FIXME: point at earth
+            cameraConfig.moveCameraToTarget([0,150,0],positionsTable['earth'],up);
             break;
         case 50: //2
-            //FIXME: point at sun
+            cameraConfig.moveCameraToTarget(eye,target,up);
             break;
         case 71: //G
             //change to gouraud
@@ -211,7 +212,7 @@ function drawPlanets(gl, programInfo, bufferInfos, textureInfos, view, projectio
     const timeSeconds = time / 1000
     const animationProgress = timeSeconds / config.animation.cycle_period
     for (const info in bufferInfos) {
-        if(info == "kerbol"){ //if its the sun, no shaders
+        if(info == "sun"){ //if its the sun, no shaders
             drawPlanet(gl,planets,info,programInfoNoShading,bufferInfos[info],textureInfos[info],view,projection,animationProgress);
         }
         else{ //otherwise use whatever's provided
@@ -229,7 +230,7 @@ function drawPlanet(gl,planets,info,programInfo, bufferInfo, textureInfo, view, 
         planets[info].pos[1],
         planets[info].pos[2])
 
-    if (info != "kerbol") {
+    if (info != "sun") {
         translationVector = ellipseTranslationVector(info, time)
             const planetOriginalPos = v3.create(
                 planets[info].pos[0],
