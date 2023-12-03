@@ -23,9 +23,9 @@ const gl = document.querySelector("canvas").getContext("webgl");
 const canvas = document.querySelector("canvas")
 
 const programInfoNoShading = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
-const programInfo = twgl.createProgramInfo(gl, [vsPhong, fsPhong])
-// const programInfoGouraud = twgl.createProgramInfo(gl, [vsGouraud, fsGouraud])
-
+const programInfoPhong = twgl.createProgramInfo(gl, [vsPhong, fsPhong])
+const programInfoGouraud = twgl.createProgramInfo(gl, [vsGouraud, fsGouraud])
+var shadingMode = programInfoPhong;
 
 const bufferInfos = generateBufferInfos(gl, config.bodies);
 const textureInfos = generateTextureInfos(gl,config.bodies);
@@ -111,6 +111,18 @@ var keyDown = function(e){
         case 50: //2
             //FIXME: point at sun
             break;
+        case 71: //G
+            //change to gouraud
+            shadingMode = programInfoGouraud;
+            break;
+        case 78: //N
+            //change to none
+            shadingMode = programInfoNoShading;
+            break;
+        case 80: //P
+            //change to phong
+            shadingMode = programInfoPhong;
+            break;
     }
 };
 
@@ -158,10 +170,11 @@ function render(time) {
     const view = m4.inverse(cameraConfig.camera);
     //***********************************
 
-    const viewProjection = m4.multiply(projection, view);
-    const world = m4.identity();
+    // const viewProjection = m4.multiply(projection, view);
+    // const world = m4.identity();
 
-    drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, view, world, time)
+    // drawPlanets(gl, programInfoPhong, bufferInfos, textureInfos, view, projection, time);
+    drawPlanets(gl, shadingMode, bufferInfos, textureInfos, view, projection, time);
 
     requestAnimationFrame(render);
 }
@@ -190,48 +203,56 @@ function generateTextureInfos(gl,planets){
     return textureInfos
 } 
 
-function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, view,world,time) {
+function drawPlanets(gl, programInfo, bufferInfos, textureInfos, view, projection,time) {
     const planets = config.bodies
     const step = time * 0.001
-
     for (const info in bufferInfos) {
-        gl.useProgram(programInfo.program);
-        twgl.setBuffersAndAttributes(gl, programInfo, bufferInfos[info]);
-
-        let translationVector = v3.create(
-            planets[info].pos[0],
-            planets[info].pos[1],
-            planets[info].pos[2])
-
-        if (info != "kerbol") {
-            translationVector = ellipseTranslationVector(info, time)
+        if(info == "kerbol"){ //if its the sun, no shaders
+            drawPlanet(gl,planets,info,programInfoNoShading,bufferInfos[info],textureInfos[info],view,projection,time);
         }
+        else{ //otherwise use whatever's provided
+            drawPlanet(gl,planets,info,programInfo,bufferInfos[info],textureInfos[info],view,projection,time);
+        }
+    }
+}
 
-        let matrix = m4.translate(viewProjection, translationVector);
 
-        const uniforms = {};
-        uniforms.u_worldViewProjection = matrix;
-        uniforms.u_texture = textureInfos[info];
-        // if (info == "kerbol"){
-        //     twgl.setUniforms(programInfoNoShading, uniforms);
-        //     twgl.drawBufferInfo(gl, bufferInfos[info]);
-        //     continue;
-        // }
-        uniforms.u_modelview = view;//m4.multiply(view,viewProjection);
+
+
+function drawPlanet(gl,planets,info,programInfo, bufferInfo, textureInfo, view, projection,time){
+    gl.useProgram(programInfo.program);
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+
+    let translationVector = v3.create(
+        planets[info].pos[0],
+        planets[info].pos[1],
+        planets[info].pos[2])
+
+    if (info != "kerbol") {
+        translationVector = ellipseTranslationVector(info, time)
+    }
+
+    const world = m4.identity();
+    const viewProjection = m4.multiply(projection, view);
+
+    const uniforms = {};
+    uniforms.u_worldViewProjection = m4.translate(viewProjection, translationVector); //m4.multiply(matrix,world);
+    uniforms.u_texture = textureInfo;
+    
+    if (programInfo == programInfoPhong || programInfo == programInfoGouraud){
+        uniforms.u_modelview = m4.translation(translationVector);//m4.multiply(view,matrix);
         uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
         uniforms.Ka = 1;
         uniforms.Kd = 1;
         uniforms.Ks = 0.5;
-        uniforms.shininessVal = 100;
-        uniforms.ambientColor = [0, 0, 0, 1]; //
-        uniforms.diffuseColor = [0.5,0,0,1]; //orange. whatever
-        uniforms.specularColor = [1, 5, 1, 1]; //white
-        uniforms.lightPos = [0,0,0]; // Light position
-
-
-        twgl.setUniforms(programInfo, uniforms);
-        twgl.drawBufferInfo(gl, bufferInfos[info]);
+        uniforms.shininessVal = 10;
+        uniforms.ambientColor = [0, 0, 0, 1];  // black
+        uniforms.diffuseColor = [0,0,0,1];     // not super necessary since there will be textures
+        uniforms.specularColor = [1, 1, 1, 1]; // white
+        uniforms.lightPos = [0,0,0]; // light position
     }
+    twgl.setUniforms(programInfo, uniforms);
+    twgl.drawBufferInfo(gl, bufferInfo);
 }
 
 function ellipseTranslationVector(planetName, time) {

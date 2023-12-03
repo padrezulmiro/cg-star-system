@@ -35,11 +35,11 @@ export class Camera{
     turnCamera(THETA,PHI){
         // VERSION 1: axisRotate
         this.camera = m4.axisRotate(this.camera,this.yAxis,THETA);
-        this.xAxis = m4.transformDirection(m4.rotationY(THETA),this.xAxis);
-        this.zAxis = m4.transformDirection(m4.rotationY(THETA),this.zAxis);
+        // this.xAxis = m4.transformDirection(m4.rotationY(THETA),this.xAxis);
+        // this.zAxis = m4.transformDirection(m4.rotationY(THETA),this.zAxis);
         this.camera = m4.axisRotate(this.camera,this.xAxis,PHI);
-        this.yAxis = m4.transformDirection(m4.rotationX(PHI),this.yAxis);
-        this.zAxis = m4.transformDirection(m4.rotationX(PHI),this.zAxis);
+        // this.yAxis = m4.transformDirection(m4.rotationX(PHI),this.yAxis);
+        // this.zAxis = m4.transformDirection(m4.rotationX(PHI),this.zAxis);
         this.rt_dX = THETA;
         this.rt_dY = PHI;
     }
@@ -56,11 +56,16 @@ export class Camera{
         // target = target || this.target;
         // up = up ||this.up;
         this.camera = m4.lookAt(eye,target,up);
-        this.zAxis = v3.normalize(v3.subtract(eye, target));
-        this.xAxis = v3.normalize(v3.cross(up, this.zAxis));
-        this.yAxis = v3.normalize(v3.cross(this.zAxis, this.xAxis));
+        // this.zAxis = v3.normalize(v3.subtract(eye, target));
+        // this.xAxis = v3.normalize(v3.cross(up, this.zAxis));
+        // this.yAxis = v3.normalize(v3.cross(this.zAxis, this.xAxis));
         this.eye = eye;
         this.target = target;
         this.up = up;
+    }
+
+    moveCameraToPlanet(planetMatrix){
+        const new_eye = m4.transformPoint(planetMatrix,[0,0,10],this.up);
+        this.camera = m4.lookAt(new_eye,)
     }
 }
