@@ -4,7 +4,11 @@ import * as twgl from "./node_modules/twgl.js/dist/5.x/twgl-full.module.js"
 import {config} from "./star-config.js"
 import {
     vsDirect,
-    fsDirect
+    fsDirect,
+    vsPhong,
+    fsPhong,
+    vsGouraud,
+    fsGouraud
 } from "./shaders.js"
 import * as cam from "./camera.js"
 
@@ -18,7 +22,10 @@ const gl = document.querySelector("canvas").getContext("webgl");
 /** @type {HTMLCanvasElement}*/
 const canvas = document.querySelector("canvas")
 
-const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
+const programInfoNoShading = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
+const programInfo = twgl.createProgramInfo(gl, [vsPhong, fsPhong])
+// const programInfoGouraud = twgl.createProgramInfo(gl, [vsGouraud, fsGouraud])
+
 
 const bufferInfos = generateBufferInfos(gl, config.bodies);
 const textureInfos = generateTextureInfos(gl,config.bodies);
@@ -61,8 +68,8 @@ var mouseUp = function(e){
 
 var mouseMove = function(e) {
   if (!drag) return false;
-    rt_dX = (e.pageX-x_prev) * 2 * Math.PI / canvas.width,
-    rt_dY = (e.pageY-y_prev) * 2 * Math.PI / canvas.height;
+    rt_dX = (e.pageX-x_prev) * 0.5 * Math.PI / canvas.width,
+    rt_dY = (e.pageY-y_prev) * 0.5 * Math.PI / canvas.height;
     // THETA += rt_dX;
     // PHI += rt_dY;
     x_prev = e.pageX, y_prev = e.pageY;
@@ -152,8 +159,9 @@ function render(time) {
     //***********************************
 
     const viewProjection = m4.multiply(projection, view);
+    const world = m4.identity();
 
-    drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time)
+    drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, view, world, time)
 
     requestAnimationFrame(render);
 }
@@ -182,7 +190,7 @@ function generateTextureInfos(gl,planets){
     return textureInfos
 } 
 
-function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time) {
+function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, view,world,time) {
     const planets = config.bodies
     const step = time * 0.001
 
@@ -202,8 +210,23 @@ function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
         let matrix = m4.translate(viewProjection, translationVector);
 
         const uniforms = {};
-        uniforms.u_matrix = matrix;
+        uniforms.u_worldViewProjection = matrix;
         uniforms.u_texture = textureInfos[info];
+        // if (info == "kerbol"){
+        //     twgl.setUniforms(programInfoNoShading, uniforms);
+        //     twgl.drawBufferInfo(gl, bufferInfos[info]);
+        //     continue;
+        // }
+        uniforms.u_modelview = view;//m4.multiply(view,viewProjection);
+        uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+        uniforms.Ka = 1;
+        uniforms.Kd = 1;
+        uniforms.Ks = 0.5;
+        uniforms.shininessVal = 100;
+        uniforms.ambientColor = [0, 0, 0, 1]; //
+        uniforms.diffuseColor = [0.5,0,0,1]; //orange. whatever
+        uniforms.specularColor = [1, 5, 1, 1]; //white
+        uniforms.lightPos = [0,0,0]; // Light position
 
 
         twgl.setUniforms(programInfo, uniforms);
