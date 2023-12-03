@@ -110,7 +110,9 @@ var keyDown = function(e){
             break;
         case 49: //1
             //FIXME: point at earth
-            cameraConfig.moveCameraToTarget([0,150,0],positionsTable['earth'],up);
+            var earthUp = v3.add(positionsTable['earth'],[0,0,100]);
+            console.log(earthUp);
+            cameraConfig.moveCameraToTarget(earthUp,positionsTable['earth'],up);
             break;
         case 50: //2
             cameraConfig.moveCameraToTarget(eye,target,up);
