@@ -20,9 +20,19 @@ const canvas = document.querySelector("canvas")
 
 const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 
-const bufferInfos = generateBufferInfos(gl, config.bodies)
+const bufferInfos = generateBufferInfos(gl, config.bodies);
+const textureInfos = generateTextureInfos(gl,config.bodies);
 
 gl.clearColor(0, 0, 0.2, 1);  // background color
+
+// ========== BINDING SHADERS ==========
+// image.addEventListener('load', function() {
+//     // Now that the image has loaded make copy it to the texture.
+//     gl.bindTexture(gl.TEXTURE_2D, texture);
+//     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image);
+//     gl.generateMipmap(gl.TEXTURE_2D);
+//   });
+  
 
 // ========== INITIAL CAM config ==========
 const eye = [0, 0, 50];
@@ -104,6 +114,7 @@ var keyUp = function(e){
 document.addEventListener("keydown", keyDown, false);
 document.addEventListener("keyup", keyUp, false);
 
+
 // ========== FINALLY: BEGIN RENDER ==========
 requestAnimationFrame(render);
 
@@ -142,7 +153,7 @@ function render(time) {
 
     const viewProjection = m4.multiply(projection, view);
 
-    drawPlanets(gl, programInfo, bufferInfos, viewProjection, time)
+    drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time)
 
     requestAnimationFrame(render);
 }
@@ -152,13 +163,26 @@ function generateBufferInfos(gl, planets) {
 
     for (const planet in planets) {
         bufferInfos[planets[planet].name] =
-            primitives.createSphereBufferInfo(gl, planets[planet].radius, 32, 32)
+            primitives.createSphereBufferInfo(gl, planets[planet].radius, 32, 32)        
     }
 
     return bufferInfos
 }
 
-function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
+function generateTextureInfos(gl,planets){
+    const textureInfos = {}
+    for (const planet in planets){
+        const img = new Image();
+        img.src = planets[planet].texture;
+        img.addEventListener('load', function() {
+            console.log("done loading: ",img.src);
+            textureInfos[planets[planet].name] = twgl.createTexture(gl, {src: img});
+          });
+    }
+    return textureInfos
+} 
+
+function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time) {
     const planets = config.bodies
     const step = time * 0.001
 
@@ -175,10 +199,12 @@ function drawPlanets(gl, programInfo, bufferInfos, viewProjection, time) {
             translationVector = ellipseTranslationVector(info, time)
         }
 
-        let matrix = m4.translate(viewProjection, translationVector)
+        let matrix = m4.translate(viewProjection, translationVector);
 
-        const uniforms = {}
-        uniforms.u_matrix = matrix
+        const uniforms = {};
+        uniforms.u_matrix = matrix;
+        uniforms.u_texture = textureInfos[info];
+
 
         twgl.setUniforms(programInfo, uniforms);
         twgl.drawBufferInfo(gl, bufferInfos[info]);

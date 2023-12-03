@@ -16,7 +16,8 @@ export const config = {
             name: "kerbol",
             radius: 6,
             pos: [0, 0, 0],
-            rotation_period: 10
+            rotation_period: 10,
+            texture: "./textures/2k_sun.jpg"
         },
 
         kerbin: {
@@ -29,7 +30,8 @@ export const config = {
                 eccentricity: 0.5,
                 ellipseRotation: Math.PI / 6,
                 orbital_period: 100
-            }
+            },
+            texture: "./textures/2k_earth_daymap.jpg"
         },
 
         mun: {
@@ -42,7 +44,8 @@ export const config = {
                 eccentricity: 0.5,
                 ellipseRotation: Math.PI / 6,
                 orbital_period: 100
-            }
+            },
+            texture: "./textures/2k_moon.jpg"
         },
 
         jool : {
@@ -55,7 +58,8 @@ export const config = {
                 eccentricity: 0.3,
                 ellipseRotation: 0,
                 orbital_period: 100
-            }
+            },
+            texture: "./textures/2k_jupiter.jpg"
         },
     }
 }
