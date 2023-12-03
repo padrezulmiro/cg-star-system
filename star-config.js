@@ -1,16 +1,12 @@
 export const config = {
-    canvas: {
-        width: 400,
-        height: 300
-    },
-
     animation: {
         // Animation time is in seconds
-        cycle_period: 300
+        cycle_period: 15
     },
 
     bodies: {
-        // Distance is in AUs and time is in Kerbin days
+        // Distance is in AUs and time is in animation cycles given by
+        // animation.cycle_period
 
         kerbol: {
             name: "kerbol",
@@ -23,13 +19,13 @@ export const config = {
         kerbin: {
             name: "kerbin",
             radius: 1,
-            pos: [8, 0, 0],
+            pos: [10, 0, 0],
             rotation_period: 1,
             orbit: {
                 around: "kerbol",
                 eccentricity: 0.5,
-                ellipseRotation: Math.PI / 6,
-                orbital_period: 100
+                ellipseRotation: 30,
+                orbital_period: 0.5
             },
             texture: "./textures/2k_earth_daymap.jpg"
         },
@@ -37,13 +33,13 @@ export const config = {
         mun: {
             name: "mun",
             radius: 0.5,
-            pos: [9, 0, 0],
+            pos: [12, 0, 0],
             rotation_period: 1,
             orbit: {
                 around: "kerbin",
                 eccentricity: 0.5,
-                ellipseRotation: Math.PI / 6,
-                orbital_period: 100
+                ellipseRotation: 45,
+                orbital_period: 1 / 12
             },
             texture: "./textures/2k_moon.jpg"
         },
@@ -51,13 +47,13 @@ export const config = {
         jool : {
             name: "jool",
             radius: 1.5,
-            pos: [40, 0, 0],
+            pos: [20, 0, 0],
             rotation_period: 1,
             orbit: {
                 around: "kerbol",
                 eccentricity: 0.3,
-                ellipseRotation: 0,
-                orbital_period: 100
+                ellipseRotation: 60,
+                orbital_period: 2
             },
             texture: "./textures/2k_jupiter.jpg"
         },

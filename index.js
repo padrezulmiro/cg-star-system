@@ -23,7 +23,10 @@ const programInfo = twgl.createProgramInfo(gl, [vsDirect, fsDirect])
 const bufferInfos = generateBufferInfos(gl, config.bodies);
 const textureInfos = generateTextureInfos(gl,config.bodies);
 
+const positionsTable = createPositionsTable()
+
 gl.clearColor(0, 0, 0.2, 1);  // background color
+
 
 // ========== BINDING SHADERS ==========
 // image.addEventListener('load', function() {
@@ -182,9 +185,11 @@ function generateTextureInfos(gl,planets){
     return textureInfos
 } 
 
-function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection, time) {
+function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
+                     time) {
     const planets = config.bodies
-    const step = time * 0.001
+    const timeSeconds = time / 1000
+    const animationProgress = timeSeconds / config.animation.cycle_period
 
     for (const info in bufferInfos) {
         gl.useProgram(programInfo.program);
@@ -196,7 +201,13 @@ function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
             planets[info].pos[2])
 
         if (info != "kerbol") {
-            translationVector = ellipseTranslationVector(info, time)
+            translationVector = ellipseTranslationVector(info, animationProgress)
+            const planetOriginalPos = v3.create(
+                planets[info].pos[0],
+                planets[info].pos[1],
+                planets[info].pos[2]
+            )
+            positionsTable[info] = translationVector
         }
 
         let matrix = m4.translate(viewProjection, translationVector);
@@ -211,19 +222,26 @@ function drawPlanets(gl, programInfo, bufferInfos, textureInfos, viewProjection,
     }
 }
 
-function ellipseTranslationVector(planetName, time) {
+function ellipseTranslationVector(planetName, animationProgress) {
     /*
      * See https://en.wikipedia.org/wiki/Ellipse#/media/File:Ellipse-param.svg
      * a = c + k where k is the distance between vertex and orbited planet
      *
      * This vertex will be the starting position of the planet
      */
+
     const planets = config.bodies
     const planet = planets[planetName]
     const orbited = planets[planet.orbit.around]
 
-    const planetPos = v3.create(planet.pos[0], planet.pos[1], planet.pos[2])
-    const orbitedPos = v3.create(orbited.pos[0], orbited.pos[1], orbited.pos[2])
+    const orbitedOriginalPos =
+          v3.create(orbited.pos[0], orbited.pos[1], orbited.pos[2])
+    const orbitedPos = positionsTable[orbited.name]
+    const orbitedTranslation = v3.subtract(orbitedPos, orbitedOriginalPos)
+    const planetOriginalPos = v3.create(planet.pos[0], planet.pos[1],
+                                      planet.pos[2])
+    const planetPos = v3.add(planetOriginalPos, orbitedTranslation)
+
 
     const orbitedPlanetVec = v3.subtract(planetPos, orbitedPos)
     const orbitedPlanetDistance = v3.length(orbitedPlanetVec)
@@ -238,7 +256,7 @@ function ellipseTranslationVector(planetName, time) {
     )
 
     const centerPos = v3.subtract(orbitedPos, centerOrbitedVec)
-    let majorAxis = v3.subtract(planetPos, centerPos)
+    const majorAxis = v3.subtract(planetPos, centerPos)
     const majorAxisDistance = v3.length(majorAxis)
 
     const perpendicularUnitVec = standardPerpendicular(majorAxis)
@@ -248,17 +266,18 @@ function ellipseTranslationVector(planetName, time) {
     )
     const unrotatedMinAxis = v3.mulScalar(perpendicularUnitVec, minAxisDistance)
 
+    const ellipseRotationRadians = toRadians(planet.orbit.ellipseRotation)
     const rotationMatrix =
-          m4.axisRotation(majorAxis, planet.orbit.ellipseRotation)
-    let minAxis = m4.transformDirection(rotationMatrix, unrotatedMinAxis)
+          m4.axisRotation(majorAxis, ellipseRotationRadians)
+    const minAxis = m4.transformDirection(rotationMatrix, unrotatedMinAxis)
 
-    const step = time * 0.001
-    majorAxis = v3.mulScalar(majorAxis, Math.cos(step))
-    minAxis = v3.mulScalar(minAxis, Math.sin(step))
+    let angle = (2 * Math.PI) * animationProgress / planet.orbit.orbital_period
+    const weightedMajorAxis = v3.mulScalar(majorAxis, Math.cos(angle))
+    const weightedMinAxis = v3.mulScalar(minAxis, Math.sin(angle))
 
-    let translationVec = v3.copy(planetPos)
-    translationVec = v3.add(translationVec, majorAxis)
-    translationVec = v3.add(translationVec, minAxis)
+    let translationVec = v3.copy(centerPos)
+    translationVec = v3.add(translationVec, weightedMajorAxis)
+    translationVec = v3.add(translationVec, weightedMinAxis)
 
     return translationVec
 }
@@ -288,4 +307,22 @@ function standardPerpendicular(vector) {
     }
 
     return v3.create(0, 0, 0)
+}
+
+function toRadians(angleInDegrees) {
+    return angleInDegrees * Math.PI / 180
+}
+
+function createPositionsTable() {
+    const table = {}
+
+    for (const planetName in config.bodies) {
+        table[planetName] = v3.create(
+            config.bodies[planetName].pos[0],
+            config.bodies[planetName].pos[1],
+            config.bodies[planetName].pos[2]
+        )
+    }
+
+    return table
 }
