@@ -1,6 +1,11 @@
 export const vsDirect = `
-uniform mat4 u_worldViewProjection;
+uniform mat4 u_worldViewProjection;          // projection matrix
+uniform mat4 u_modelview;       // movement matrix from obj to camera view?
+uniform mat4 u_worldInverseTranspose;       //
 attribute vec4 position;
+attribute vec3 normal;
+varying vec3 normalInterp;
+varying vec3 vertPos;
 attribute vec2 texcoord;
 varying vec2 v_texcoord;
 
@@ -9,6 +14,11 @@ void main()
     //********** texturing **********
     gl_Position = u_worldViewProjection * position;
     v_texcoord = texcoord;
+
+    vec4 vertPos4 = u_modelview * position; //vec4(position, 1.0);
+    vertPos = vec3(vertPos4) / vertPos4.w;
+    normalInterp = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
+    gl_Position = u_worldViewProjection * vertPos4; //projection * vertPos4;
     
 }
 `
@@ -41,14 +51,14 @@ varying vec3 vertPos;
 void main()
 {
     //********** texturing **********
-    gl_Position = u_worldViewProjection * position;
+    // gl_Position = u_worldViewProjection * position;
     v_texcoord = texcoord;
     // ********** shading **********
     vec4 vertPos4 = u_modelview * position; //vec4(position, 1.0);
     vertPos = vec3(vertPos4) / vertPos4.w;
     normalInterp = (u_worldInverseTranspose * vec4(normal, 0)).xyz; //vec3(u_normalMat * vec4(normal, 0.0));
 
-    // gl_Position = u_worldViewProjection * vertPos4; //projection * vertPos4;
+    gl_Position = u_worldViewProjection * vertPos4; //projection * vertPos4;
 }
 
 `
@@ -123,13 +133,13 @@ varying vec4 color; //color
 void main()
 {
     //********** texturing **********
-    gl_Position = u_worldViewProjection * position;
+    // gl_Position = u_worldViewProjection * position;
     v_texcoord = texcoord;
     // ********** shading **********
     vec4 vertPos4 = u_modelview * position; //vec4(position, 1.0);
     vertPos = vec3(vertPos4) / vertPos4.w;
     normalInterp = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-    // gl_Position = u_worldViewProjection * vertPos4; //projection * vertPos4;
+    gl_Position = u_worldViewProjection * vertPos4; //projection * vertPos4;
 
     vec3 N = normalize(normalInterp);
     vec3 L = normalize(lightPos - vertPos);

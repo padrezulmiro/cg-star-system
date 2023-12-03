@@ -263,18 +263,17 @@ function drawPlanet(gl,planets,info,programInfo, bufferInfo, textureInfo, view, 
             )
             positionsTable[info] = translationVector
         }
-    }
 
     const world = m4.identity();
     const viewProjection = m4.multiply(projection, view);
 
     const uniforms = {};
     uniforms.u_worldViewProjection = m4.translate(viewProjection, translationVector); //m4.multiply(matrix,world);
+    uniforms.u_modelview = m4.translation(translationVector);//m4.multiply(view,matrix);
+    uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
     uniforms.u_texture = textureInfo;
     
     if (programInfo == programInfoPhong || programInfo == programInfoGouraud){
-        uniforms.u_modelview = m4.translation(translationVector);//m4.multiply(view,matrix);
-        uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
         uniforms.Ka = 1;
         uniforms.Kd = 1;
         uniforms.Ks = 0.5;
